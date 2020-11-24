@@ -68,6 +68,10 @@ const campaignFragment = gql`
 
         currentSpec {
             originalInput
+            supersedingCampaignSpec {
+                createdAt
+                applyURL
+            }
         }
     }
 

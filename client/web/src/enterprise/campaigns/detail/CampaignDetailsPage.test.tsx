@@ -6,6 +6,7 @@ import { NOOP_TELEMETRY_SERVICE } from '../../../../../shared/src/telemetry/tele
 import { PageTitle } from '../../../components/PageTitle'
 import { registerHighlightContributions } from '../../../../../shared/src/highlight/contributions'
 import { mount } from 'enzyme'
+import { SupersedingCampaignSpecFields } from '../../../graphql-operations'
 
 // This is idempotent, so calling it in multiple tests is not a problem.
 registerHighlightContributions()
@@ -17,7 +18,13 @@ describe('CampaignDetailsPage', () => {
         PageTitle.titleSet = false
     })
 
-    const renderCampaignDetailsPage = ({ viewerCanAdminister }: { viewerCanAdminister: boolean }) => (
+    const renderCampaignDetailsPage = ({
+        supersedingCampaignSpec,
+        viewerCanAdminister,
+    }: {
+        supersedingCampaignSpec: SupersedingCampaignSpecFields | null
+        viewerCanAdminister: boolean
+    }) => (
         <CampaignDetailsPage
             namespaceID="namespace123"
             campaignName="c"
@@ -57,6 +64,7 @@ describe('CampaignDetailsPage', () => {
                     },
                     currentSpec: {
                         originalInput: 'name: awesome-campaign\ndescription: somestring',
+                        supersedingCampaignSpec,
                     },
                 })
             }
@@ -67,11 +75,21 @@ describe('CampaignDetailsPage', () => {
     )
 
     for (const viewerCanAdminister of [true, false]) {
-        describe(`viewerCanAdminister: ${String(viewerCanAdminister)}`, () => {
-            test('viewing existing', () => {
-                const rendered = mount(renderCampaignDetailsPage({ viewerCanAdminister }))
-                expect(rendered).toMatchSnapshot()
+        for (const supersedingCampaignSpec of [
+            null,
+            {
+                createdAt: '2020-01-01T00:00:00Z',
+                applyURL: '/users/foo/campaigns/apply/BAR',
+            },
+        ]) {
+            describe(`supersedingCampaignSpec: ${String(supersedingCampaignSpec)}; viewerCanAdminister: ${String(
+                viewerCanAdminister
+            )}`, () => {
+                test('viewing existing', () => {
+                    const rendered = mount(renderCampaignDetailsPage({ supersedingCampaignSpec, viewerCanAdminister }))
+                    expect(rendered).toMatchSnapshot()
+                })
             })
-        })
+        }
     }
 })
