@@ -193,7 +193,7 @@ func (s *Server) cleanupRepos() {
 				return false, err
 			}
 			if err := gitGC(dir); err != nil {
-				return true, err
+				return false, err
 			}
 		}
 
