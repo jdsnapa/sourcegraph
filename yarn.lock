@@ -3767,10 +3767,10 @@
   dependencies:
     "@types/jest" "*"
 
-"@types/jest@*", "@types/jest@26.0.15":
-  version "26.0.15"
-  resolved "https://registry.npmjs.org/@types/jest/-/jest-26.0.15.tgz#12e02c0372ad0548e07b9f4e19132b834cb1effe"
-  integrity sha512-s2VMReFXRg9XXxV+CW9e5Nz8fH2K1aEhwgjUqPPbQd7g95T0laAcvLv032EhFHIa5GHsZ8W7iJEQVaJq6k3Gog==
+"@types/jest@*", "@types/jest@26.0.16":
+  version "26.0.16"
+  resolved "https://registry.npmjs.org/@types/jest/-/jest-26.0.16.tgz#b47abd50f6ed0503f589db8e126fc8eb470cf87c"
+  integrity sha512-Gp12+7tmKCgv9JjtltxUXokohCAEZfpJaEW5tn871SGRp8I+bRWBonQO7vW5NHwnAHe5dd50+Q4zyKuN35i09g==
   dependencies:
     jest-diff "^26.0.0"
     pretty-format "^26.0.0"
@@ -20698,7 +20698,12 @@ source-map@^0.7.3, source-map@~0.7.2:
   resolved "https://registry.npmjs.org/source-map/-/source-map-0.7.3.tgz#5302f8169031735226544092e64981f751750383"
   integrity sha512-CkCj6giN3S+n9qrYiBTX5gystlENnRW5jZeNLHpe6aue+SrHcG5VYwujhW9s4dY31mEGsxBDrHR6oI69fTXsaQ==
 
-sourcegraph@^24.0.0, "sourcegraph@link:client/packages/sourcegraph-extension-api":
+sourcegraph@^24.0.0:
+  version "24.8.0"
+  resolved "https://registry.npmjs.org/sourcegraph/-/sourcegraph-24.8.0.tgz#27dc196d8a050ac69f03c3680229d1866f57c754"
+  integrity sha512-uB2SbjEzcA/HWP3Rj+INUXqQweO8HmRdVWW7zesFWZQFBcu7JTcq0pg0jeAN71glKPIyyOgZVrIm1d7KoVzfZw==
+
+"sourcegraph@link:client/packages/sourcegraph-extension-api":
   version "24.8.0"
 
 space-separated-tokens@^1.0.0:
