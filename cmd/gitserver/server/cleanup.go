@@ -35,6 +35,9 @@ const (
 	// repoTTLGC is how often we should reclone a repository once it is
 	// reporting git gc issues.
 	repoTTLGC = time.Hour * 24 * 2
+	// repoTTLAutoGC is how often we should attempt a git-gc operation on
+	// a particular repository.
+	repoTTLAutoGC = time.Hour
 )
 
 var (
@@ -175,9 +178,25 @@ func (s *Server) cleanupRepos() {
 	}
 
 	performGC := func(dir GitDir) (done bool, err error) {
-		if err := gitGC(dir); err != nil {
-			return true, err
+		// Determine the last GC time, baked into .git/config.
+		gcTime, err := getGCTime(dir)
+		if err != nil {
+			return false, err
 		}
+
+		// If we've passed the timeout threshold, go ahead and try to
+		// perform a garbage collection pass on the repo.
+		if time.Since(gcTime) > repoTTLAutoGC+jitterDuration(string(dir), repoTTLAutoGC/4) {
+			// Set the next GC time so that if an error occurs during
+			// GC we don't constantly reattempt it each pass.
+			if err := setGCTime(dir, gcTime.Add(time.Since(gcTime)/2)); err != nil {
+				return false, err
+			}
+			if err := gitGC(dir); err != nil {
+				return true, err
+			}
+		}
+
 		return false, nil
 	}
 
@@ -608,6 +627,45 @@ func getRecloneTime(dir GitDir) (time.Time, error) {
 		return now, err
 	}
 
+	return time.Unix(sec, 0), nil
+}
+
+// setGCTime sets the time at which a repository should have a garbage
+// collection pass attempted.
+func setGCTime(dir GitDir, now time.Time) error {
+	err := gitConfigSet(dir, "sourcegraph.gcTimestamp", strconv.FormatInt(now.Unix(), 10))
+	if err != nil {
+		ensureHead(dir)
+		return errors.Wrap(err, "failed to update gcTimestamp")
+	}
+	return nil
+}
+
+// getGCTime returns an approximate time a repository should have a garbage
+// collection pass attempted. If the  value is not stored in the repository,
+// the gc time is set to now.
+func getGCTime(dir GitDir) (time.Time, error) {
+	update := func() (time.Time, error) {
+		now := time.Now()
+		return now, setGCTime(dir, now)
+	}
+
+	value, err := gitConfigGet(dir, "sourcegraph.gcTimestamp")
+	if err != nil {
+		return time.Unix(0, 0), errors.Wrap(err, "failed to determine gc timestamp")
+	}
+	if value == "" {
+		return update()
+	}
+
+	sec, err := strconv.ParseInt(strings.TrimSpace(value), 10, 0)
+	if err != nil {
+		now, err2 := update()
+		if err2 != nil {
+			err = err2
+		}
+		return now, err
+	}
 	return time.Unix(sec, 0), nil
 }
 
