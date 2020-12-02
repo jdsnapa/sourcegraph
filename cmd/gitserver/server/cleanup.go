@@ -174,6 +174,13 @@ func (s *Server) cleanupRepos() {
 		return false, multi
 	}
 
+	performGC := func(dir GitDir) (done bool, err error) {
+		if err := gitGC(dir); err != nil {
+			return true, err
+		}
+		return false, nil
+	}
+
 	type cleanupFn struct {
 		Name string
 		Do   func(GitDir) (bool, error)
@@ -193,6 +200,13 @@ func (s *Server) cleanupRepos() {
 		// these problems. git gc is slow and resource intensive. It is
 		// cheaper and faster to just reclone the repository.
 		{"maybe reclone", maybeReclone},
+		// Runs a number of housekeeping tasks within the current repository,
+		// such as compressing file revisions (to reduce disk space and increase
+		// performance), removing unreachable objects which may have been created
+		// from prior invocations of git add, packing refs, pruning reflog, rerere
+		// metadata or stale working trees. May also update ancillary indexes such
+		// as the commit-graph.
+		{"garbage collect", performGC},
 	}
 
 	err := bestEffortWalk(s.ReposDir, func(dir string, fi os.FileInfo) error {
@@ -617,6 +631,16 @@ func checkMaybeCorruptRepo(repo api.RepoName, dir GitDir, stderr string) {
 	if err != nil {
 		log15.Error("failed to set maybeCorruptRepo config", repo, "repo", "error", err)
 	}
+}
+
+func gitGC(dir GitDir) error {
+	cmd := exec.Command("git", "gc", "--auto")
+	dir.Set(cmd)
+	err := cmd.Run()
+	if err != nil {
+		return errors.Wrapf(wrapCmdError(cmd, err), "failed to git-gc")
+	}
+	return nil
 }
 
 func gitConfigGet(dir GitDir, key string) (string, error) {
